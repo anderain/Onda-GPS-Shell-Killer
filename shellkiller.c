@@ -14,6 +14,7 @@ HWND                hWndBtnExit;
 ATOM                MyRegisterClass     (HINSTANCE hInstance, LPTSTR szWindowClass);
 BOOL                InitInstance        (HINSTANCE, int);
 LRESULT CALLBACK    WndProc             (HWND, UINT, WPARAM, LPARAM);
+void                Launch              (PTCHAR exePath);
 
 int WINAPI WinMain( HINSTANCE hInstance,
                     HINSTANCE hPrevInstance,
@@ -156,6 +157,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     PostQuitMessage(0);
                     break;
                 case IDC_BTN_KILLSHELL:
+                    Launch(_T("\\Windows\\explorer.exe"));
                     KillShell(_T("SHELLEX_LYG"));
                     break;
             }
@@ -167,4 +169,23 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
             return DefWindowProc(hWnd, message, wParam, lParam);
    }
    return 0;
+}
+
+void Launch(PTCHAR exePath) {
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi;
+
+    memset(&si, 0, sizeof(si));
+    si.cb = sizeof(si);
+    memset(&pi, 0, sizeof(pi));
+
+    if (!CreateProcess(exePath, NULL, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
+        TCHAR errMsg[500];
+        wsprintf(errMsg, _T("Failed to launch %s, error code: %d\n"), exePath, GetLastError());
+        MessageBox(NULL, errMsg, _T("Error"), MB_OK);
+        return;
+    }
+
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
 }
